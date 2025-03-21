@@ -20,27 +20,30 @@ let teams = ["Team A", "Team B", "Team C", "Team D"];
 let votes = {};
 teams.forEach(team => votes[team] = 0);
 
-// ROUTES
-
-// Voting page – dynamic with current team names
+// Redirect root to /vote for voters
 app.get('/', (req, res) => {
-  res.render('index', { teams: teams });
+  res.redirect('/vote');
 });
 
-// Handle new vote submissions (restricts one vote per device via cookies)
+// Dedicated voting page for users (vote.ejs)
+app.get('/vote', (req, res) => {
+  res.render('vote', { teams: teams });
+});
+
+// Handle vote submissions from the dedicated voting page
 app.post('/vote', (req, res) => {
   if (req.cookies.voted) {
-    return res.redirect('/?voted=' + encodeURIComponent(req.cookies.voted));
+    return res.redirect('/vote?voted=' + encodeURIComponent(req.cookies.voted));
   }
   const team = req.body.team;
   if (votes.hasOwnProperty(team)) {
     votes[team]++;
     res.cookie('voted', team, { maxAge: 24 * 60 * 60 * 1000 });
   }
-  res.redirect('/?voted=' + encodeURIComponent(team));
+  res.redirect('/vote?voted=' + encodeURIComponent(team));
 });
 
-// Handle vote editing (allowed even if cookie exists)
+// Handle vote editing (if needed)
 app.post('/edit-vote', (req, res) => {
   const oldVote = req.body.oldVote;
   const newVote = req.body.newVote;
@@ -51,10 +54,10 @@ app.post('/edit-vote', (req, res) => {
     votes[newVote]++;
     res.cookie('voted', newVote, { maxAge: 24 * 60 * 60 * 1000 });
   }
-  res.redirect('/?voted=' + encodeURIComponent(newVote));
+  res.redirect('/vote?voted=' + encodeURIComponent(newVote));
 });
 
-// Results page – dynamically displays current vote counts
+// Results page – displays current vote counts
 app.get('/results', (req, res) => {
   res.render('results', { votes: votes });
 });
@@ -68,14 +71,12 @@ app.get('/api/votes', (req, res) => {
 app.get('/qr', async (req, res) => {
   let url;
   if (process.env.RENDER_EXTERNAL_URL) {
-    url = process.env.RENDER_EXTERNAL_URL;
+    url = process.env.RENDER_EXTERNAL_URL + '/vote';
   } else if (process.env.NODE_ENV === 'production') {
-    // If in production but RENDER_EXTERNAL_URL is not set, use host header with HTTPS
-    url = `https://${req.get('host')}/`;
+    url = `https://${req.get('host')}/vote`;
   } else {
-    url = `http://${req.hostname}:${port}/`;
+    url = `http://${req.hostname}:${port}/vote`;
   }
-  
   try {
     const qrCodeDataURL = await QRCode.toDataURL(url);
     res.render('qr', { qrCodeDataURL: qrCodeDataURL });
@@ -105,12 +106,12 @@ app.post('/admin/update', (req, res) => {
       newTeams.push({ index: parseInt(key.replace("team", "")), name: req.body[key].trim() });
     }
   });
-  // Sort by index, map to names, and filter out empty names
+  // Sort by the numeric index, map to names, and filter out empty names
   newTeams = newTeams.sort((a, b) => a.index - b.index)
                        .map(obj => obj.name)
                        .filter(name => name !== "");
   if (newTeams.length === 0) {
-    // Fallback to default if none provided
+    // Fallback to defaults if none provided
     newTeams = ["Team A", "Team B", "Team C", "Team D"];
   }
   teams = newTeams;

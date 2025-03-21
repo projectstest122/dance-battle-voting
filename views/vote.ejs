@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Vote for the Winning Team</title>
+  <style>
+    body { 
+      font-family: Arial, sans-serif; 
+      text-align: center; 
+      background: #f0f0f0; 
+      padding-top: 40px; 
+    }
+    h1 { 
+      font-size: 36px; 
+      color: white; 
+      text-shadow: 1px 1px 3px rgba(0,0,0,0.6); 
+    }
+    form { 
+      margin-top: 20px; 
+    }
+    button { 
+      margin: 5px; 
+      padding: 10px 20px; 
+      font-size: 18px; 
+    }
+  </style>
+</head>
+<body>
+  <h1>Vote for the Winning Team</h1>
+  <form action="/vote" method="POST">
+    <% teams.forEach(function(team) { %>
+      <button type="submit" name="team" value="<%= team %>"><%= team %></button>
+    <% }); %>
+  </form>
+</body>
+</html>
