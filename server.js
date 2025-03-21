@@ -12,7 +12,7 @@ app.set('views', __dirname + '/views');
 // Middleware
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(cookieParser());
-// (Optional) Serve static files from a public folder if needed
+// Serve static files from the "public" folder
 app.use(express.static('public'));
 
 // Global battle state: teams and votes
@@ -66,7 +66,8 @@ app.get('/api/votes', (req, res) => {
 
 // Generate QR Code for the voting page
 app.get('/qr', async (req, res) => {
-  const url = `http://${req.hostname}:${port}/`;
+  // Use the Render external URL if available, otherwise fallback to local
+  const url = process.env.RENDER_EXTERNAL_URL || `http://${req.hostname}:${port}/`;
   try {
     const qrCodeDataURL = await QRCode.toDataURL(url);
     res.render('qr', { qrCodeDataURL: qrCodeDataURL });
@@ -76,7 +77,7 @@ app.get('/qr', async (req, res) => {
   }
 });
 
-// Admin panel – view current teams/votes and update team names / add teams
+// Admin panel – view current teams/votes and update team names (new battle)
 app.get('/admin', (req, res) => {
   res.render('admin', { teams: teams, votes: votes });
 });
@@ -90,18 +91,17 @@ app.post('/admin/reset', (req, res) => {
 // Admin action: Update team names (new battle) and reset votes
 app.post('/admin/update', (req, res) => {
   let newTeams = [];
-  // Iterate over all keys in req.body that start with "team"
+  // Iterate over keys in req.body that start with "team"
   Object.keys(req.body).forEach(key => {
     if (key.startsWith("team")) {
       newTeams.push({ index: parseInt(key.replace("team", "")), name: req.body[key].trim() });
     }
   });
-  // Sort by the numeric index and then map to names; filter out empty names
+  // Sort by numeric index, then extract names and filter out empty values
   newTeams = newTeams.sort((a, b) => a.index - b.index)
                        .map(obj => obj.name)
                        .filter(name => name !== "");
   if (newTeams.length === 0) {
-    // fallback to default if none provided
     newTeams = ["Team A", "Team B", "Team C", "Team D"];
   }
   teams = newTeams;
@@ -112,5 +112,5 @@ app.post('/admin/update', (req, res) => {
 
 // Start the server
 app.listen(port, () => {
-  console.log(`Server running at http://localhost:${port}`);
+  console.log(`Server running at http://${req.hostname || 'localhost'}:${port}`);
 });
