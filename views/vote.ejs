@@ -2,46 +2,66 @@
 <html>
 <head>
   <title>Vote for the Winning Team</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <style>
     body { 
       font-family: Arial, sans-serif; 
       text-align: center; 
       background: #f0f0f0; 
-      padding-top: 40px; 
+      padding-top: 5vh; 
+      margin: 0;
     }
     h1 { 
-      font-size: 36px; 
+      font-size: 6vw; /* Responsive title size */
       color: white; 
       text-shadow: 1px 1px 3px rgba(0,0,0,0.6); 
+      margin-bottom: 4vh;
     }
     form { 
-      margin-top: 20px; 
+      margin-top: 3vh; 
     }
     button { 
-      margin: 5px; 
-      padding: 20px 40px;  /* Larger buttons */
-      font-size: 24px;       /* Larger text */
-    }
-    @media (max-width: 600px) {
-      button {
-        padding: 30px 60px;  /* Even larger for small screens */
-        font-size: 28px;
-      }
-    }
-    p.message {
-      font-size: 28px;
+      margin: 2vh 0.5vw; 
+      padding: 3vh 5vw;  
+      font-size: 5vw;  
+      border: none;
+      border-radius: 8px;
+      background-color: #256EFF; /* Example background, can be adjusted */
       color: white;
-      text-shadow: 1px 1px 3px rgba(0,0,0,0.6);
+      box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+    }
+    /* Media query for small screens (e.g., iPhones) */
+    @media (max-width: 600px) {
+      h1 {
+        font-size: 8vw;
+      }
+      button {
+        padding: 4vh 6vw;
+        font-size: 6vw;
+      }
     }
   </style>
 </head>
 <body>
   <h1>Vote for the Winning Team</h1>
-  <form action="/vote" method="POST">
-    <% teams.forEach(function(team) { %>
-      <button type="submit" name="team" value="<%= team %>"><%= team %></button>
-    <% }); %>
-  </form>
+  <% if (query && query.voted) { %>
+    <p style="font-size: 5vw; color: white; text-shadow: 1px 1px 3px rgba(0,0,0,0.6);">
+      You voted for: <strong><%= query.voted %></strong>
+    </p>
+    <form action="/edit-vote" method="POST">
+      <input type="hidden" name="oldVote" value="<%= query.voted %>">
+      <p style="font-size: 5vw; color: white; text-shadow: 1px 1px 3px rgba(0,0,0,0.6);">Change your vote:</p>
+      <% teams.forEach(function(team) { %>
+        <button type="submit" name="newVote" value="<%= team %>"><%= team %></button>
+      <% }); %>
+    </form>
+  <% } else { %>
+    <form action="/vote" method="POST">
+      <% teams.forEach(function(team) { %>
+        <button type="submit" name="team" value="<%= team %>"><%= team %></button>
+      <% }); %>
+    </form>
+  <% } %>
   
   <!-- Polling for team updates so the page refreshes automatically -->
   <script>
@@ -54,10 +74,9 @@
         const data = await res.json();
         // Get new team names from the API
         const newTeams = Object.keys(data).map(t => t.trim()).sort();
-        // Sort the current teams array
         const currentTeamsSorted = currentTeams.slice().sort();
         if (JSON.stringify(newTeams) !== JSON.stringify(currentTeamsSorted)) {
-          // If the teams have changed, reload the page
+          // Reload page to update team names if there’s a change
           window.location.reload();
         }
       } catch (err) {
@@ -65,7 +84,6 @@
       }
     }
     
-    // Poll every 3 seconds
     setInterval(pollForTeamUpdates, 3000);
     pollForTeamUpdates();
   </script>
