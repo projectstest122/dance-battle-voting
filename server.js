@@ -25,7 +25,7 @@ app.get('/', (req, res) => {
   res.render('admin', { teams: teams, votes: votes });
 });
 
-// Dedicated voting page for users (vote.ejs) - accessible at /vote
+// Dedicated voting page for users (vote.ejs)
 app.get('/vote', (req, res) => {
   res.render('vote', { teams: teams });
 });
@@ -106,7 +106,7 @@ app.post('/admin/update', (req, res) => {
       newTeams.push({ index: parseInt(key.replace("team", "")), name: req.body[key].trim() });
     }
   });
-  // Sort by the numeric index, map to names, and filter out empty names
+  // Sort by numeric index, map to names, and filter out empty names
   newTeams = newTeams.sort((a, b) => a.index - b.index)
                        .map(obj => obj.name)
                        .filter(name => name !== "");
