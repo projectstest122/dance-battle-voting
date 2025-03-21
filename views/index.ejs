@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Dance Battle Voting</title>
+  <style>
+    .hidden { display: none; }
+    button { margin: 5px; padding: 10px 20px; font-size: 16px; }
+  </style>
+</head>
+<body>
+  <h1>Vote for the Winning Team</h1>
+  
+  <!-- New Vote Section -->
+  <div id="newVoteSection">
+    <p>Cast your vote:</p>
+    <form action="/vote" method="POST">
+      <% teams.forEach(function(team) { %>
+        <button type="submit" name="team" value="<%= team %>"><%= team %></button>
+      <% }); %>
+    </form>
+  </div>
+  
+  <!-- Edit Vote Section -->
+  <div id="editVoteSection" class="hidden">
+    <p>You already voted for <span id="currentVote"></span>.</p>
+    <p>Change your vote:</p>
+    <form action="/edit-vote" method="POST">
+      <input type="hidden" name="oldVote" id="oldVoteInput" value="">
+      <% teams.forEach(function(team) { %>
+        <button type="submit" name="newVote" value="<%= team %>"><%= team %></button>
+      <% }); %>
+    </form>
+  </div>
+  
+  <p><a href="/qr">View QR Code for Voting Page</a></p>
+  <p><a href="/admin">Admin Panel</a></p>
+  <p><a href="/results">View Results</a></p>
+  
+  <script>
+    // Helper to get query parameters
+    function getQueryParam(param) {
+      const params = new URLSearchParams(window.location.search);
+      return params.get(param);
+    }
+    
+    document.addEventListener('DOMContentLoaded', function() {
+      let storedVote = localStorage.getItem('vote');
+      const votedFromURL = getQueryParam('voted');
+      if (votedFromURL) {
+        storedVote = votedFromURL;
+        localStorage.setItem('vote', storedVote);
+      }
+      if (storedVote) {
+        document.getElementById('newVoteSection').classList.add('hidden');
+        document.getElementById('editVoteSection').classList.remove('hidden');
+        document.getElementById('currentVote').textContent = storedVote;
+        document.getElementById('oldVoteInput').value = storedVote;
+      } else {
+        document.getElementById('newVoteSection').classList.remove('hidden');
+        document.getElementById('editVoteSection').classList.add('hidden');
+      }
+    });
+    
+    // Polling function to detect team name changes and reload the page if needed
+    async function pollForTeamUpdates() {
+      try {
+        const res = await fetch('/api/votes');
+        const data = await res.json();
+        const newTeamNames = Object.keys(data).map(name => name.trim()).sort();
+        let currentTeamNames = [];
+        const newVoteButtons = document.querySelectorAll('#newVoteSection button');
+        if (newVoteButtons.length > 0) {
+          newVoteButtons.forEach(btn => currentTeamNames.push(btn.value.trim()));
+        } else {
+          const editVoteButtons = document.querySelectorAll('#editVoteSection button');
+          editVoteButtons.forEach(btn => currentTeamNames.push(btn.value.trim()));
+        }
+        currentTeamNames.sort();
+        if (JSON.stringify(newTeamNames) !== JSON.stringify(currentTeamNames)) {
+          // Reload page to update team names if there’s a change
+          window.location.reload();
+        }
+      } catch (err) {
+        console.error('Error polling for team updates:', err);
+      }
+    }
+    
+    setInterval(pollForTeamUpdates, 3000); // Poll every 3 seconds
+    pollForTeamUpdates();
+  </script>
+</body>
+</html>

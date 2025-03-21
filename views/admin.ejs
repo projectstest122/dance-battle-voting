@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Admin Panel - Manage Battle</title>
+  <style>
+    label { display: block; margin: 5px 0; }
+    input[type="text"] { padding: 5px; font-size: 16px; width: 300px; display: block; margin-bottom: 10px; }
+    button { padding: 10px 20px; font-size: 16px; margin-top: 10px; display: block; }
+    #addTeamBtn { margin-top: 20px; }
+  </style>
+</head>
+<body>
+  <h1>Admin Panel</h1>
+  
+  <h2>Current Teams &amp; Votes</h2>
+  <ul>
+    <% teams.forEach(function(team) { %>
+      <li><strong><%= team %></strong>: <%= votes[team] %> votes</li>
+    <% }); %>
+  </ul>
+  
+  <h2>Reset Votes</h2>
+  <form action="/admin/reset" method="POST">
+    <button type="submit">Reset Votes</button>
+  </form>
+  
+  <h2>Update Team Names / Add Teams (New Battle)</h2>
+  <form id="updateForm" action="/admin/update" method="POST">
+    <div id="teamInputs">
+      <% teams.forEach(function(team, index) { %>
+        <div class="team-input">
+          <label for="team<%= index %>">Team <%= index + 1 %>:</label>
+          <input type="text" id="team<%= index %>" name="team<%= index %>" value="<%= team %>">
+        </div>
+      <% }); %>
+    </div>
+    <button type="button" id="addTeamBtn">Add Team</button>
+    <!-- The submit button is now below all team inputs -->
+    <button type="submit">Update Teams and Reset Votes</button>
+  </form>
+  
+  <p><a href="/">Back to Voting Page</a></p>
+  <p><a href="/results">View Results</a></p>
+  
+  <script>
+    // JavaScript to add new team input fields dynamically
+    document.getElementById('addTeamBtn').addEventListener('click', function() {
+      const teamInputs = document.getElementById('teamInputs');
+      // Create a new input field
+      const index = teamInputs.children.length;
+      const container = document.createElement('div');
+      container.className = 'team-input';
+      const label = document.createElement('label');
+      label.setAttribute('for', 'team' + index);
+      label.textContent = 'Team ' + (index + 1) + ':';
+      const input = document.createElement('input');
+      input.type = 'text';
+      input.id = 'team' + index;
+      input.name = 'team' + index;
+      input.style.width = '300px';
+      input.style.padding = '5px';
+      input.style.fontSize = '16px';
+      container.appendChild(label);
+      container.appendChild(input);
+      teamInputs.appendChild(container);
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Vote Results</title>
+  <style>
+    /* Background image with blur */
+    body::before {
+      content: "";
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: url('bg.png') no-repeat center center fixed;
+      background-size: cover;
+      z-index: -1;
+    }
+    
+    body { 
+      font-family: Arial, sans-serif; 
+      text-align: center; 
+      background: rgba(0, 0, 0, 0.5); /* fallback overlay */
+      color: white;
+      margin: 0;
+      padding: 0;
+    }
+    
+    /* Title style */
+    h1 {
+      margin-top: 40px;
+      font-family: 'Impact', sans-serif;
+      font-size: 50px;
+      color: white;
+      text-shadow: 2px 2px 4px rgba(0,0,0,0.6);
+    }
+    
+    .team-container { 
+      display: inline-block; 
+      margin: 20px; 
+    }
+    
+    /* Team name styling */
+    .team-name { 
+      font-family: 'Arial Black', sans-serif;
+      font-size: 28px; 
+      margin-bottom: 10px; 
+      color: white;
+      text-shadow: 1px 1px 2px rgba(0,0,0,0.6);
+    }
+    
+    .team-box {
+      width: 300px; 
+      height: 300px; 
+      font-size: 48px; 
+      font-weight: bold; 
+      color: white; 
+      border-radius: 20px; 
+      line-height: 300px;
+      transition: transform 0.3s, font-size 0.3s, background 0.3s;
+    }
+    
+    .zoom { transform: scale(1.1); }
+    .enlarge { font-size: 63px; }
+    @keyframes rotate360 { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+    .rotate { animation: rotate360 1s ease-in-out; }
+  </style>
+</head>
+<body>
+  <h1>Prairiewood PAT - Dance Battle</h1>
+  <%
+    // Fixed set of colors provided
+    const colors = ["#46237A", "#256EFF", "#3DDC97", "#FF495C", "#F4D35E", "#EF8A17", "#5E807F", "#6A041D"];
+    const teamNames = Object.keys(votes);
+    let assignedColors = [];
+    
+    // If teams are fewer than available colors, shuffle the colors
+    if (teamNames.length <= colors.length) {
+      assignedColors = colors.slice();
+      for (let i = assignedColors.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [assignedColors[i], assignedColors[j]] = [assignedColors[j], assignedColors[i]];
+      }
+    } else {
+      // Otherwise, assign colors using modulo
+      assignedColors = teamNames.map((_, i) => colors[i % colors.length]);
+    }
+  %>
+  <% teamNames.forEach(function(team, index) { %>
+    <div class="team-container">
+      <h2 class="team-name"><%= team %></h2>
+      <div id="<%= team.toLowerCase().replace(/\s/g, '') %>" class="team-box" style="background: <%= assignedColors[index] %>">
+        <%= votes[team] %>
+      </div>
+    </div>
+  <% }); %>
+  
+  <script>
+    async function fetchVotes() {
+      const res = await fetch('/api/votes');
+      const data = await res.json();
+      // Check if teams have changed; if so, reload the page
+      const newTeamNames = Object.keys(data).sort();
+      const currentTeamNames = Array.from(document.querySelectorAll('.team-container h2'))
+                                    .map(el => el.textContent.trim())
+                                    .sort();
+      if (JSON.stringify(newTeamNames) !== JSON.stringify(currentTeamNames)) {
+        window.location.reload();
+      }
+      // Update vote counts in boxes
+      for (const team in data) {
+        const id = team.toLowerCase().replace(/\s/g, '');
+        const box = document.getElementById(id);
+        if (box) {
+          const oldText = box.textContent;
+          const newCount = data[team];
+          if (oldText !== newCount.toString()) {
+            box.textContent = newCount;
+            box.classList.add('zoom', 'enlarge');
+            if (newCount % 10 === 0) {
+              box.classList.add('rotate');
+            }
+            setTimeout(() => {
+              box.classList.remove('zoom', 'enlarge', 'rotate');
+            }, 1000);
+          }
+        }
+      }
+    }
+    setInterval(fetchVotes, 1000);
+    fetchVotes();
+  </script>
+</body>
+</html>
