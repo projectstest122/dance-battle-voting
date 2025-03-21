@@ -20,12 +20,12 @@ let teams = ["Team A", "Team B", "Team C", "Team D"];
 let votes = {};
 teams.forEach(team => votes[team] = 0);
 
-// Redirect root to /vote for voters
+// Root URL now serves the admin panel
 app.get('/', (req, res) => {
-  res.redirect('/vote');
+  res.render('admin', { teams: teams, votes: votes });
 });
 
-// Dedicated voting page for users (vote.ejs)
+// Dedicated voting page for users (vote.ejs) - accessible at /vote
 app.get('/vote', (req, res) => {
   res.render('vote', { teams: teams });
 });
@@ -57,7 +57,7 @@ app.post('/edit-vote', (req, res) => {
   res.redirect('/vote?voted=' + encodeURIComponent(newVote));
 });
 
-// Results page – displays current vote counts
+// Results page – dynamically displays current vote counts
 app.get('/results', (req, res) => {
   res.render('results', { votes: votes });
 });
