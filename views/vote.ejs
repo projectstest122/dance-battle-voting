@@ -19,8 +19,14 @@
     }
     button { 
       margin: 5px; 
-      padding: 20px 40px;  /* Much bigger buttons */
+      padding: 20px 40px;  /* Larger buttons */
       font-size: 24px;       /* Larger text */
+    }
+    @media (max-width: 600px) {
+      button {
+        padding: 30px 60px;  /* Even larger for small screens */
+        font-size: 28px;
+      }
     }
     p.message {
       font-size: 28px;
@@ -31,21 +37,37 @@
 </head>
 <body>
   <h1>Vote for the Winning Team</h1>
-  <% if (query && query.voted) { %>
-    <p class="message">You voted for: <strong><%= query.voted %></strong></p>
-    <form action="/edit-vote" method="POST">
-      <input type="hidden" name="oldVote" value="<%= query.voted %>">
-      <p>Change your vote:</p>
-      <% teams.forEach(function(team) { %>
-        <button type="submit" name="newVote" value="<%= team %>"><%= team %></button>
-      <% }); %>
-    </form>
-  <% } else { %>
-    <form action="/vote" method="POST">
-      <% teams.forEach(function(team) { %>
-        <button type="submit" name="team" value="<%= team %>"><%= team %></button>
-      <% }); %>
-    </form>
-  <% } %>
+  <form action="/vote" method="POST">
+    <% teams.forEach(function(team) { %>
+      <button type="submit" name="team" value="<%= team %>"><%= team %></button>
+    <% }); %>
+  </form>
+  
+  <!-- Polling for team updates so the page refreshes automatically -->
+  <script>
+    // Output the current teams array from the server as a JS variable
+    const currentTeams = <%- JSON.stringify(teams) %>;
+    
+    async function pollForTeamUpdates() {
+      try {
+        const res = await fetch('/api/votes');
+        const data = await res.json();
+        // Get new team names from the API
+        const newTeams = Object.keys(data).map(t => t.trim()).sort();
+        // Sort the current teams array
+        const currentTeamsSorted = currentTeams.slice().sort();
+        if (JSON.stringify(newTeams) !== JSON.stringify(currentTeamsSorted)) {
+          // If the teams have changed, reload the page
+          window.location.reload();
+        }
+      } catch (err) {
+        console.error("Error polling for team updates:", err);
+      }
+    }
+    
+    // Poll every 3 seconds
+    setInterval(pollForTeamUpdates, 3000);
+    pollForTeamUpdates();
+  </script>
 </body>
 </html>
