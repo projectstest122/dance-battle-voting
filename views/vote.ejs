@@ -19,17 +19,33 @@
     }
     button { 
       margin: 5px; 
-      padding: 10px 20px; 
-      font-size: 18px; 
+      padding: 20px 40px;  /* Much bigger buttons */
+      font-size: 24px;       /* Larger text */
+    }
+    p.message {
+      font-size: 28px;
+      color: white;
+      text-shadow: 1px 1px 3px rgba(0,0,0,0.6);
     }
   </style>
 </head>
 <body>
   <h1>Vote for the Winning Team</h1>
-  <form action="/vote" method="POST">
-    <% teams.forEach(function(team) { %>
-      <button type="submit" name="team" value="<%= team %>"><%= team %></button>
-    <% }); %>
-  </form>
+  <% if (query && query.voted) { %>
+    <p class="message">You voted for: <strong><%= query.voted %></strong></p>
+    <form action="/edit-vote" method="POST">
+      <input type="hidden" name="oldVote" value="<%= query.voted %>">
+      <p>Change your vote:</p>
+      <% teams.forEach(function(team) { %>
+        <button type="submit" name="newVote" value="<%= team %>"><%= team %></button>
+      <% }); %>
+    </form>
+  <% } else { %>
+    <form action="/vote" method="POST">
+      <% teams.forEach(function(team) { %>
+        <button type="submit" name="team" value="<%= team %>"><%= team %></button>
+      <% }); %>
+    </form>
+  <% } %>
 </body>
 </html>

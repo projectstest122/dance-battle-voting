@@ -35,18 +35,20 @@
       <% }); %>
     </div>
     <button type="button" id="addTeamBtn">Add Team</button>
-    <!-- The submit button is now below all team inputs -->
     <button type="submit">Update Teams and Reset Votes</button>
   </form>
   
-  <p><a href="/">Back to Voting Page</a></p>
+  <!-- New button linking to the QR Code page -->
+  <button onclick="window.location.href='/qr'" style="margin-top:20px; padding: 10px 20px; font-size: 16px;">
+    Show QR Code for Voting
+  </button>
+  
   <p><a href="/results">View Results</a></p>
   
   <script>
     // JavaScript to add new team input fields dynamically
     document.getElementById('addTeamBtn').addEventListener('click', function() {
       const teamInputs = document.getElementById('teamInputs');
-      // Create a new input field
       const index = teamInputs.children.length;
       const container = document.createElement('div');
       container.className = 'team-input';

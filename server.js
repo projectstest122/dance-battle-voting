@@ -26,8 +26,9 @@ app.get('/', (req, res) => {
 });
 
 // Dedicated voting page for users (vote.ejs)
+// Pass query parameters to show if a vote has been cast.
 app.get('/vote', (req, res) => {
-  res.render('vote', { teams: teams });
+  res.render('vote', { teams: teams, query: req.query });
 });
 
 // Handle vote submissions from the dedicated voting page
@@ -43,7 +44,7 @@ app.post('/vote', (req, res) => {
   res.redirect('/vote?voted=' + encodeURIComponent(team));
 });
 
-// Handle vote editing (if needed)
+// Handle vote editing
 app.post('/edit-vote', (req, res) => {
   const oldVote = req.body.oldVote;
   const newVote = req.body.newVote;
@@ -86,11 +87,6 @@ app.get('/qr', async (req, res) => {
   }
 });
 
-// Admin panel – view current teams/votes and update team names to start a new battle
-app.get('/admin', (req, res) => {
-  res.render('admin', { teams: teams, votes: votes });
-});
-
 // Admin action: Reset votes only
 app.post('/admin/reset', (req, res) => {
   teams.forEach(team => votes[team] = 0);
@@ -100,18 +96,15 @@ app.post('/admin/reset', (req, res) => {
 // Admin action: Update team names (new battle) and reset votes
 app.post('/admin/update', (req, res) => {
   let newTeams = [];
-  // Iterate over all keys in req.body that start with "team"
   Object.keys(req.body).forEach(key => {
     if (key.startsWith("team")) {
       newTeams.push({ index: parseInt(key.replace("team", "")), name: req.body[key].trim() });
     }
   });
-  // Sort by numeric index, map to names, and filter out empty names
   newTeams = newTeams.sort((a, b) => a.index - b.index)
                        .map(obj => obj.name)
                        .filter(name => name !== "");
   if (newTeams.length === 0) {
-    // Fallback to defaults if none provided
     newTeams = ["Team A", "Team B", "Team C", "Team D"];
   }
   teams = newTeams;
@@ -120,7 +113,11 @@ app.post('/admin/update', (req, res) => {
   res.redirect('/admin');
 });
 
-// Start the server
+// Admin panel – view current teams/votes and update team names
+app.get('/admin', (req, res) => {
+  res.render('admin', { teams: teams, votes: votes });
+});
+
 app.listen(port, () => {
   console.log(`Server running at http://localhost:${port}`);
 });
